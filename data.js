@@ -748,7 +748,10 @@ const LT = {
   },
   // ── UTILITY FUNCTIONS ───────────────────────────────────────
   formatRp(amount) {
-    return 'Rp ' + Number(amount).toLocaleString('id-ID');
+    if (amount === null || amount === undefined || isNaN(Number(amount))) return 'Rp 0';
+    // Bulatkan bilangan bulat agar tidak menghasilkan angka desimal pecahan seperti .50 atau desimal cents
+    const rounded = Math.round(Number(amount));
+    return 'Rp ' + rounded.toLocaleString('id-ID');
   },
 
   generateId(prefix) {

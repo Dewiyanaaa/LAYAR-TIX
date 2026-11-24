@@ -94,39 +94,39 @@ function getDeliveryProgress(orderOrBooking) {
       step: 1,
       progressPercent: 35,
       statusText: 'Sedang Disiapkan di Dapur Kantin',
-      badgeText: ' DISIAPKAN',
-      badgeBg: 'rgba(245,158,11,0.15)',
-      badgeColor: '#f59e0b',
-      borderColor: 'rgba(245,158,11,0.3)',
-      barGradient: 'linear-gradient(90deg, #f59e0b, #ffd700)',
+      badgeText: 'DISIAPKAN',
+      badgeBg: 'rgba(52, 211, 153, 0.16)',
+      badgeColor: '#34d399',
+      borderColor: 'rgba(52, 211, 153, 0.4)',
+      barGradient: 'linear-gradient(90deg, #34d399, #ffd35c)',
       estMinutes: '3-4 menit lagi tiba',
-      icon: ''
+      icon: '🍿'
     };
   } else if (elapsedMinutes < 5) {
     return {
       step: 2,
       progressPercent: 75,
       statusText: 'Petugas Menuju ke Kursi Studio Anda',
-      badgeText: ' DALAM PENGANTARAN',
-      badgeBg: 'rgba(59,130,246,0.15)',
-      badgeColor: '#60a5fa',
-      borderColor: 'rgba(59,130,246,0.35)',
-      barGradient: 'linear-gradient(90deg, #3b82f6, #60a5fa)',
+      badgeText: 'DALAM PENGANTARAN',
+      badgeBg: 'rgba(251, 191, 36, 0.16)',
+      badgeColor: '#fbbf24',
+      borderColor: 'rgba(251, 191, 36, 0.4)',
+      barGradient: 'linear-gradient(90deg, #fbbf24, #ffd35c)',
       estMinutes: 'Tiba sesaat lagi (~1 mnt)',
-      icon: ''
+      icon: '🚀'
     };
   } else {
     return {
       step: 3,
       progressPercent: 100,
       statusText: 'Makanan Berhasil Diantar ke Kursi',
-      badgeText: ' SELESAI DIANTAR',
-      badgeBg: 'rgba(34,197,94,0.15)',
-      badgeColor: '#22c55e',
-      borderColor: 'rgba(34,197,94,0.35)',
-      barGradient: 'linear-gradient(90deg, #22c55e, #10b981)',
+      badgeText: 'SELESAI DIANTAR',
+      badgeBg: 'rgba(52, 211, 153, 0.22)',
+      badgeColor: '#34d399',
+      borderColor: 'rgba(52, 211, 153, 0.45)',
+      barGradient: 'linear-gradient(90deg, #34d399, #10b981)',
       estMinutes: 'Selamat menikmati film!',
-      icon: ''
+      icon: '✅'
     };
   }
 }
@@ -338,71 +338,102 @@ function renderList(containerId, bookings, fnbOrders, isActive) {
 
   // Standalone F&B cards (if active)
   if (isActive && fnbOrders && fnbOrders.length > 0) {
-    html += `<div style="padding:0 16px 8px;font-size:13px;font-weight:700;color:var(--gold);display:flex;align-items:center;gap:6px">
-       Pesanan &amp; Antar Kursi F&B (${fnbOrders.length})
+    html += `
+    <div style="grid-column: 1 / -1; width: 100%; margin-bottom: 6px;">
+      <div style="padding: 0 16px 8px; font-size: 14px; font-weight: 800; color: var(--gold, #ffd700); display: flex; align-items: center; justify-content: space-between; letter-spacing: 0.02em;">
+        <span style="display: inline-flex; align-items: center; gap: 8px;">
+          <span style="font-size: 17px;">🍿</span>
+          <span>Pesanan &amp; Antar Kursi F&amp;B</span>
+          <span style="font-size: 11px; background: rgba(245, 194, 66, 0.15); border: 1px solid rgba(245, 194, 66, 0.35); padding: 2px 8px; border-radius: 12px; color: var(--gold, #ffd700);">${fnbOrders.length} Pesanan</span>
+        </span>
+      </div>
     </div>`;
+
     html += fnbOrders.map(o => {
       // Calculate dynamic simulated delivery status based on time
       const statusInfo = getDeliveryProgress(o);
 
+      // Hitung total bersih item aktif & biaya (agar angka selalu akurat & bulat)
+      const rawTotal = (o.items || []).reduce((acc, it) => {
+        return it.status === 'cancelled' ? acc : acc + (Number(it.price || 0) * Number(it.qty || 1));
+      }, 0);
+      const deliveryFee = o.deliveryFee ? Number(o.deliveryFee) : 0;
+      const orderTotal = o.status === 'cancelled' ? 0 : Math.round(Number(o.total || (rawTotal + deliveryFee)));
+
       return `
-      <div class="ticket-card" style="border-color:${statusInfo.borderColor};background:linear-gradient(135deg,#121a16,#12121a);margin-bottom:14px">
-        <div class="ticket-top">
-          <div style="font-size:38px;padding:10px 4px">${statusInfo.icon}</div>
-          <div class="ticket-info">
-            <div class="ticket-movie">
-              ${o.deliveryType === 'in_seat' ? 'Antar ke Kursi Studio (In-Seat)' : 'Pesanan Kantin F&B'}
-            </div>
-            <div class="ticket-cinema"> Bioskop: ${o.cinemaName}</div>
-            ${o.deliveryType === 'in_seat' ? `
-              <div style="font-size:11px;font-weight:600;color:var(--gold);margin-top:2px">
-                 Tujuan: ${o.deliveryStudio || 'Studio 1'} · Kursi: ${o.deliverySeat || 'Duduk'}
+      <div class="fnb-standalone-card" style="border-color:${statusInfo.borderColor};">
+        <div class="fnb-card-header">
+          <div class="fnb-card-header-left">
+            <div class="fnb-icon-badge">${statusInfo.icon || '🍿'}</div>
+            <div>
+              <div class="fnb-card-title">
+                ${o.deliveryType === 'in_seat' ? 'Antar ke Kursi Studio (In-Seat)' : 'Pesanan Kantin Bioskop F&amp;B'}
               </div>
-            ` : ''}
-            <div class="ticket-meta" style="margin-top:4px">
-              <span class="ticket-meta-item"> ${LT.formatRp(o.total)}</span>
-              <span class="ticket-meta-item"> ${new Date(o.orderedAt).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })}</span>
+              <div class="fnb-card-cinema">
+                <span>🏛️</span>
+                <span>${o.cinemaName || 'LayarTix Cinema'}</span>
+              </div>
+              ${o.deliveryType === 'in_seat' ? `
+                <div class="fnb-card-target">
+                  <span>💺</span>
+                  <span>Tujuan: ${o.deliveryStudio || 'Studio 1'} · Kursi: ${o.deliverySeat || 'Duduk'}</span>
+                </div>
+              ` : `
+                <div class="fnb-card-target" style="color: #60a5fa; background: rgba(59, 130, 246, 0.12); border-color: rgba(59, 130, 246, 0.3);">
+                  <span>🛍️</span>
+                  <span>Ambil Mandiri di Counter Kantin F&amp;B</span>
+                </div>
+              `}
             </div>
-            <div style="margin-top:8px">
-              <span class="ticket-status" style="background:${statusInfo.badgeBg};color:${statusInfo.badgeColor};border:1px solid ${statusInfo.badgeColor}44">
-                ${statusInfo.badgeText}
-              </span>
-            </div>
+          </div>
+          <div class="fnb-card-header-right">
+            <span class="fnb-card-total-price">${LT.formatRp(orderTotal)}</span>
+            <span class="fnb-card-time">${new Date(o.orderedAt || Date.now()).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })} WIB</span>
+            <span class="ticket-status" style="background:${statusInfo.badgeBg};color:${statusInfo.badgeColor};border:1px solid ${statusInfo.badgeColor}55;font-weight:800;font-size:10px;padding:3px 8px;border-radius:6px;margin-top:2px;">
+              ${statusInfo.badgeText}
+            </span>
           </div>
         </div>
 
         <!-- Real-time In-Seat Delivery Progress Bar -->
-        <div style="padding:10px 16px;background:rgba(255,255,255,0.03);border-top:1px solid rgba(255,255,255,0.06);border-bottom:1px solid rgba(255,255,255,0.06)">
-          <div style="display:flex;align-items:center;justify-content:space-between;font-size:11px;color:rgba(255,255,255,0.7);margin-bottom:6px">
-            <span style="font-weight:600;color:${statusInfo.badgeColor}">${statusInfo.statusText}</span>
-            <span style="font-size:10px;color:var(--muted)">Est: ${statusInfo.estMinutes}</span>
+        <div class="fnb-progress-section">
+          <div class="fnb-progress-meta">
+            <span class="fnb-progress-status-text" style="color:${statusInfo.badgeColor};">
+              <span>●</span>
+              <span>${statusInfo.statusText}</span>
+            </span>
+            <span class="fnb-progress-eta">Est: ${statusInfo.estMinutes}</span>
           </div>
-          <div style="width:100%;height:6px;background:rgba(255,255,255,0.1);border-radius:4px;overflow:hidden">
-            <div style="width:${statusInfo.progressPercent}%;height:100%;background:${statusInfo.barGradient};border-radius:4px;transition:width 0.5s ease"></div>
+          <div class="fnb-progress-bar-wrap">
+            <div class="fnb-progress-bar-fill" style="width:${statusInfo.progressPercent}%;background:${statusInfo.barGradient};"></div>
           </div>
-          <div style="display:flex;justify-content:space-between;font-size:10px;color:var(--muted);margin-top:4px">
-            <span style="color:${statusInfo.step >= 1 ? 'var(--gold)' : ''}">1. Disiapkan</span>
-            <span style="color:${statusInfo.step >= 2 ? 'var(--gold)' : ''}">2. Diantar Petugas</span>
-            <span style="color:${statusInfo.step >= 3 ? '#22c55e' : ''}">3. Sampai di Kursi</span>
+          <div class="fnb-progress-steps">
+            <span class="${statusInfo.step >= 1 ? 'fnb-step-active' : ''}">1. Disiapkan di Kantin</span>
+            <span class="${statusInfo.step >= 2 ? 'fnb-step-active' : ''}">2. Diantar Petugas</span>
+            <span class="${statusInfo.step >= 3 ? 'fnb-step-done' : ''}">3. Sampai di Kursi</span>
           </div>
         </div>
 
         <!-- Rincian Item F&B Standalone & Pembatalan Parsial -->
-        <div style="padding:10px 16px 6px">
+        <div class="fnb-section-wrap">
+          <div class="fnb-section-heading">
+            <span>📋</span>
+            <span>Rincian Menu Dipesan:</span>
+          </div>
           <div class="fnb-items-list">
             ${(o.items || []).map((it, idx) => {
               const isCancelled = it.status === 'cancelled';
-              const itemTotal = Number(it.price || 0) * Number(it.qty || 1);
+              const itemTotal = Math.round(Number(it.price || 0) * Number(it.qty || 1));
               const check = isFnbCancellable(o);
 
               return `
               <div class="fnb-item-row ${isCancelled ? 'fnb-item-cancelled' : ''}">
                 <div class="fnb-item-title">
-                  <span>${it.emoji || ''}</span>
+                  <span style="font-size:15px;">${it.emoji || '🍿'}</span>
                   <span>${it.name}</span>
-                  <span style="font-size:10px;color:var(--muted)">x${it.qty}</span>
+                  <span class="fnb-item-qty">x${it.qty}</span>
                 </div>
-                <div style="display:flex;align-items:center;gap:8px">
+                <div style="display:flex;align-items:center;gap:10px">
                   <span class="fnb-item-price">${LT.formatRp(itemTotal)}</span>
                   ${isCancelled ? `
                     <span class="fnb-refund-tag">Dibatalkan</span>
@@ -411,28 +442,34 @@ function renderList(containerId, bookings, fnbOrders, isActive) {
                       Batal Item
                     </button>
                   ` : `
-                    <span style="font-size:9px;color:var(--muted);background:rgba(255,255,255,0.05);padding:1px 5px;border-radius:4px">Diproses</span>
+                    <span style="font-size:10px;font-weight:700;color:rgba(255,255,255,0.6);background:rgba(255,255,255,0.06);padding:2px 7px;border-radius:6px;border:1px solid rgba(255,255,255,0.1)">Diproses</span>
                   `)}
                 </div>
               </div>`;
             }).join('')}
           </div>
           ${o.refundAmount ? `
-            <div style="font-size:11px;color:#22c55e;font-weight:600;margin-top:6px;display:flex;justify-content:space-between">
-              <span>Total Refund F&B:</span>
+            <div style="font-size:11.5px;color:#4ade80;font-weight:700;margin-top:8px;padding:6px 12px;background:rgba(34,197,94,0.08);border-radius:8px;border:1px solid rgba(34,197,94,0.25);display:flex;justify-content:space-between">
+              <span>Dana Refund F&amp;B Dikembalikan:</span>
               <span>${LT.formatRp(o.refundAmount)}</span>
             </div>
           ` : ''}
         </div>
-        <div class="ticket-actions" style="padding:4px 16px 14px;display:flex;gap:8px;flex-wrap:wrap">
-          <button class="btn btn-outline btn-sm" onclick="showFnbQr('${o.id}')"> QR Validasi Petugas</button>
+
+        <!-- Tombol Aksi Pesanan F&B -->
+        <div class="fnb-card-actions">
+          <button class="btn-fnb-qr" onclick="showFnbQr('${o.id}')">
+            <span>📱</span>
+            <span>QR Validasi Petugas</span>
+          </button>
           ${(() => {
             const check = isFnbCancellable(o);
             const hasActiveItems = (o.items || []).some(it => it.status !== 'cancelled');
             if (check.cancellable && hasActiveItems && o.status !== 'cancelled') {
               return `
                 <button class="fnb-cancel-all-btn" onclick="openFnbCancelModal('standalone', '${o.id}')">
-                  Batal Semua Pesanan F&B
+                  <span>🚫</span>
+                  <span>Batal Semua Pesanan F&amp;B</span>
                 </button>
               `;
             }

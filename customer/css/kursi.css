@@ -380,18 +380,20 @@
   bottom: 0; left: 50%;
   transform: translateX(-50%);
   width: 100%; max-width: var(--max-w);
-  background: rgba(10,10,15,0.98);
+  background: rgba(20, 5, 10, 0.96);
   backdrop-filter: blur(20px);
-  border-top: 1px solid var(--border);
+  -webkit-backdrop-filter: blur(20px);
+  border-top: 1px solid var(--border-gold-soft);
+  box-shadow: 0 -8px 30px rgba(0, 0, 0, 0.7), 0 0 25px rgba(158, 25, 52, 0.2);
   padding: 14px 16px;
   z-index: 400;
 }
 .seat-summary-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
 .seat-info { flex: 1; }
-.seat-info-label { font-size: 11px; color: var(--muted); }
-.seat-info-value { font-size: 14px; font-weight: 600; }
+.seat-info-label { font-size: 11px; color: var(--text-secondary); }
+.seat-info-value { font-size: 14.5px; font-weight: 700; color: var(--text-primary); }
 .seat-price { text-align: right; }
-.seat-price-label { font-size: 11px; color: var(--muted); }
-.seat-price-value { font-size: 18px; font-weight: 700; color: var(--gold); }
+.seat-price-label { font-size: 11px; color: var(--text-secondary); }
+.seat-price-value { font-size: 19px; font-weight: 800; color: var(--gold-light); text-shadow: 0 0 10px rgba(255, 211, 92, 0.4); }
 
 
