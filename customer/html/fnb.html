@@ -1,0 +1,578 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>LayarTix Kantin F&B – LayarTix</title>
+  <link rel="stylesheet" href="../css/beranda.css"/>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+  <style>
+    body { align-items: flex-start; }
+    .fnb-grid { display:grid;grid-template-columns:1fr 1fr;gap:12px;padding:0 16px; }
+    @media (min-width: 640px) {
+      .fnb-grid { grid-template-columns: repeat(3, 1fr); gap: 16px; }
+    }
+    @media (min-width: 1024px) {
+      .fnb-grid { grid-template-columns: repeat(4, 1fr); }
+    }
+    .fnb-item-card {
+      background:var(--card);border:1px solid var(--border);
+      border-radius:14px;padding:12px;
+      display:flex;flex-direction:column;gap:6px;
+      transition:all 0.2s;
+      position:relative;
+    }
+    .fnb-item-card:hover { border-color:rgba(255,255,255,0.18); }
+    .fnb-item-card.has-item { border-color:rgba(255,215,0,0.4);background:rgba(255,215,0,0.06); }
+    .fnb-item-card.out-of-stock {
+      opacity: 0.6;
+      border-color: rgba(239, 68, 68, 0.35);
+      background: rgba(239, 68, 68, 0.04);
+    }
+    .fnb-stock-badge {
+      font-size: 10px;
+      font-weight: 700;
+      padding: 2px 7px;
+      border-radius: 6px;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      width: fit-content;
+      background: rgba(34, 197, 94, 0.12);
+      color: #22c55e;
+      border: 1px solid rgba(34, 197, 94, 0.3);
+      margin-top: 2px;
+    }
+    .fnb-stock-badge.empty {
+      background: rgba(239, 68, 68, 0.15);
+      color: #ef4444;
+      border-color: rgba(239, 68, 68, 0.35);
+    }
+    .fnb-stock-badge.low {
+      background: rgba(245, 158, 11, 0.15);
+      color: #f59e0b;
+      border-color: rgba(245, 158, 11, 0.35);
+    }
+    .fnb-emoji { font-size:32px; }
+    .fnb-name { font-size:13px;font-weight:700;line-height:1.3; }
+    .fnb-desc { font-size:11px;color:var(--muted);line-height:1.4;flex:1; }
+    .fnb-price { font-size:14px;font-weight:700;color:var(--gold); }
+    .fnb-counter { display:flex;align-items:center;gap:8px;margin-top:6px; }
+    .counter-btn {
+      width:28px;height:28px;border-radius:50%;border:1px solid var(--border);
+      background:rgba(255,255,255,0.08);color:var(--text);font-size:16px;
+      cursor:pointer;display:flex;align-items:center;justify-content:center;
+      font-family:'Inter',sans-serif;transition:all 0.2s;line-height:1;
+    }
+    .counter-btn:hover { background:rgba(255,255,255,0.2); }
+    .counter-btn.plus { background:rgba(230,57,70,0.25);border-color:rgba(230,57,70,0.4);color:var(--red); }
+    .counter-qty { font-size:14px;font-weight:700;min-width:20px;text-align:center; }
+
+    .cat-filter { display:flex;gap:6px;overflow-x:auto;padding:0 16px;scrollbar-width:none;margin-bottom:14px; }
+    .cat-filter::-webkit-scrollbar { display:none; }
+    .cat-btn {
+      flex-shrink:0;padding:6px 14px;border-radius:20px;border:1px solid var(--border);
+      background:transparent;color:var(--muted);font-size:12px;cursor:pointer;
+      font-family:'Inter',sans-serif;transition:all 0.2s;
+    }
+    .cat-btn.active { background:rgba(255,215,0,0.15);border-color:rgba(255,215,0,0.3);color:var(--gold);font-weight:600; }
+
+    .summary-card { margin:16px;background:var(--card);border:1px solid var(--border);border-radius:16px;overflow:hidden; }
+    .summary-row { display:flex;justify-content:space-between;padding:11px 16px;font-size:13px;border-bottom:1px solid var(--border); }
+    .summary-row:last-child { border-bottom:none; }
+    .summary-label { color:var(--muted); }
+    .summary-value { font-weight:600; }
+    .summary-total { font-size:17px;font-weight:800;color:var(--gold); }
+
+    /* Split bill */
+    .split-toggle { display:flex;align-items:center;gap:12px;padding:14px 16px;background:rgba(255,255,255,0.03);border:1px solid var(--border);border-radius:14px;margin:0 16px 12px; }
+    .toggle-switch { width:44px;height:24px;background:rgba(255,255,255,0.1);border-radius:12px;position:relative;cursor:pointer;transition:background 0.3s; }
+    .toggle-switch.on { background:var(--red); }
+    .toggle-knob { position:absolute;width:18px;height:18px;background:#fff;border-radius:50%;top:3px;left:3px;transition:left 0.3s; }
+    .toggle-switch.on .toggle-knob { left:23px; }
+    .split-info { margin:0 16px 12px;padding:12px 14px;background:rgba(230,57,70,0.08);border:1px solid rgba(230,57,70,0.2);border-radius:12px;display:none; }
+
+    /* Payment methods */
+    .pay-method-pill {
+      padding: 10px 8px;
+      border-radius: 10px;
+      border: 1px solid var(--border);
+      background: rgba(255,255,255,0.03);
+      color: var(--muted);
+      font-size: 11px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+      text-align: center;
+      font-family: 'Inter', sans-serif;
+    }
+    .pay-method-pill.active {
+      background: rgba(230,57,70,0.15);
+      border-color: var(--red);
+      color: #fff;
+    }
+    .va-btn {
+      flex: 1;
+      padding: 8px 10px;
+      border-radius: 8px;
+      border: 1px solid var(--border);
+      background: transparent;
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+    }
+    .va-btn.active {
+      background: rgba(255,215,0,0.15);
+      border-color: var(--gold);
+      color: var(--gold);
+    }
+    .qr-wrap { text-align:center;padding:16px; }
+    #qrisContainer, #splitQrContainer { display:inline-block;padding:10px;background:#fff;border-radius:12px; }
+
+    .bottom-bar-cart {
+      position: fixed;
+      bottom: var(--bottom-h);
+      left: 50%;
+      transform: translateX(-50%);
+      width: 100%;
+      max-width: var(--max-w);
+      background: rgba(18,18,26,0.98);
+      border-top: 1px solid var(--border);
+      padding: 12px 16px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      z-index: 450;
+      backdrop-filter: blur(12px);
+    }
+    @media (min-width: 768px) {
+      .bottom-bar-cart {
+        bottom: 0;
+        border-radius: 20px 20px 0 0;
+        max-width: 800px;
+        box-shadow: 0 -6px 40px rgba(0,0,0,0.8);
+      }
+    }
+  </style>
+</head>
+<body>
+<div class="app-frame">
+
+  <!-- HEADER -->
+  <header class="app-header">
+    <div class="header-container">
+      <div style="display:flex;align-items:center;gap:12px">
+        <button type="button" class="btn-nav-back" onclick="handleSmartBack('beranda.html')" title="Kembali">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="15 18 9 12 15 6"></polyline>
+          </svg>
+          <span>Kembali</span>
+        </button>
+        <div class="header-logo" onclick="window.location.href='beranda.html'">LAYARTIX</div>
+        <nav class="desktop-nav">
+          <a href="beranda.html" class="desktop-nav-link ">LayarTix Beranda</a>
+          <a href="fnb.html" class="desktop-nav-link active">LayarTix Kantin F&amp;B</a>
+          <a href="tiket.html" class="desktop-nav-link ">Tiket Anda</a>
+          <a href="akun.html" class="desktop-nav-link ">Akun</a>
+        </nav>
+      </div>
+
+      <div style="display:flex;align-items:center;gap:10px">
+        <a id="adminHeaderLink" href="../../admin/html/dashboard.html"
+          style="display:none" class="hidden md:flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold bg-red-500/10 text-red-400 border border-red-500/20 hover:bg-red-500/20 transition-all">
+           Admin
+        </a>
+      </div>
+    </div>
+  </header>
+
+  <div class="page-content page-enter" style="padding-bottom:140px">
+
+    <!-- MODE BADGE: Ditampilkan hanya jika bundling tiket -->
+    <div id="modeBanner" style="display:none;margin:16px 16px 12px;padding:12px 14px;background:rgba(255,215,0,0.08);border:1px solid rgba(255,215,0,0.2);border-radius:12px;align-items:center;justify-content:space-between">
+      <div style="font-size:12px">
+        <span style="font-weight:700;color:var(--gold)" id="modeTitle"></span>
+        <div style="color:var(--muted)" id="modeDesc"></div>
+      </div>
+      <span class="badge badge-gold" id="modeBadge">Bundling Nonton</span>
+    </div>
+
+    <!-- PICKUP CINEMA SELECTION (If standalone) -->
+    <div id="cinemaPickRow" style="margin:0 16px 14px">
+      <label class="form-label" style="font-size:12px">Pilih Bioskop Pengambilan Makanan:</label>
+      <select id="pickupCinemaSelect" class="form-input" style="padding:10px 14px;font-size:13px" onchange="onPickupCinemaChange()">
+      </select>
+    </div>
+
+    <!-- Tabs: Menu Kantin (Pembayaran & QR hanya tampil setelah Lanjut Bayar) -->
+    <div class="tabs" style="margin:0 16px 14px;display:none" id="fnbTabsRow">
+      <button class="tab active" id="tabBtnCheckout" style="width:100%;cursor:default" onclick="switchView('checkout')"> Pembayaran & QR</button>
+    </div>
+
+    <!-- SECTION 1: MENU KANTIN -->
+    <div id="viewMenu">
+      <!-- Category filters -->
+      <div class="cat-filter" id="catFilter"></div>
+
+      <!-- F&B Grid -->
+      <div class="fnb-grid" id="fnbGrid"></div>
+    </div>
+
+    <!-- SECTION 2: CHECKOUT & PAYMENT -->
+    <div id="viewCheckout" class="max-w-2xl mx-auto" style="display:none">
+      <div style="padding:0 16px 8px;font-size:14px;font-weight:700"> Rincian Transaksi</div>
+
+      <div class="summary-card">
+        <!-- Ticket line (if bundling) -->
+        <div id="ticketSummaryRows"></div>
+
+        <!-- F&B lines -->
+        <div id="fnbSummaryRows"></div>
+
+        <div class="summary-row">
+          <span class="summary-label">Pajak Restoran & Hiburan (10%)</span>
+          <span class="summary-value" id="taxDisplay">Rp 0</span>
+        </div>
+
+        <div class="summary-row" style="background:rgba(255,215,0,0.05)">
+          <span class="summary-label" style="font-weight:700;color:var(--text)">TOTAL AKHIR</span>
+          <span class="summary-value summary-total" id="grandTotalDisplay">Rp 0</span>
+        </div>
+      </div>
+
+      <!-- PAYMENT METHOD SELECTION -->
+      <div style="margin:0 16px 14px">
+        <label class="form-label" style="font-size:12px;color:var(--muted);margin-bottom:8px">Pilih Metode Pembayaran:</label>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px">
+          <button type="button" class="pay-method-pill active" id="pm_qris" onclick="setPaymentMethod('qris')">
+             QRIS Standar
+          </button>
+          <button type="button" class="pay-method-pill" id="pm_va" onclick="setPaymentMethod('va')">
+             Transfer Bank VA
+          </button>
+          <button type="button" class="pay-method-pill" id="pm_ewallet" onclick="setPaymentMethod('ewallet')">
+             E-Wallet Reguler
+          </button>
+          <button type="button" class="pay-method-pill" id="pm_split" onclick="setPaymentMethod('split')">
+             Patungan / Split Bill
+          </button>
+        </div>
+
+        <!-- 1. DETAILS FOR QRIS REGULER -->
+        <div id="payBox_qris" class="payment-box" style="background:rgba(255,255,255,0.03);border:1px solid var(--border);border-radius:14px;padding:16px;text-align:center">
+          <div style="font-size:12px;font-weight:700;color:var(--gold);margin-bottom:4px">SCAN QRIS STANDAR NASIONAL</div>
+          <div style="font-size:11px;color:var(--muted);margin-bottom:12px">BCA · Mandiri · BRI · BNI · GoPay · OVO · DANA · ShopeePay</div>
+          <div id="qrisContainer" style="display:inline-block;padding:10px;background:#fff;border-radius:12px;margin-bottom:8px"></div>
+          <div style="font-size:11px;color:rgba(255,255,255,0.6)">Pindai QR dengan aplikasi m-banking atau e-wallet apa saja</div>
+
+          <!-- Tombol Share QR / Tagihan QRIS -->
+          <div style="margin-top:12px">
+            <button type="button" class="btn btn-outline btn-full" onclick="openCheckoutShareModal()" style="padding:9px 14px;font-size:12px;border-color:rgba(37,211,102,0.45);color:#25d366;background:rgba(37,211,102,0.08);display:flex;align-items:center;justify-content:center;gap:8px">
+              <svg style="width:16px;height:16px" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="18" cy="5" r="3"></circle>
+                <circle cx="6" cy="12" r="3"></circle>
+                <circle cx="18" cy="19" r="3"></circle>
+                <line x1="8.59" y1="13.51" x2="15.42" y2="17.49"></line>
+                <line x1="15.41" y1="6.51" x2="8.59" y2="10.49"></line>
+              </svg>
+              <span>Bagikan QR / Tagihan Pembayaran</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- 2. DETAILS FOR VA -->
+        <div id="payBox_va" class="payment-box" style="display:none;background:rgba(255,255,255,0.03);border:1px solid var(--border);border-radius:14px;padding:16px">
+          <div style="font-size:12px;font-weight:700;margin-bottom:8px">Pilih Virtual Account:</div>
+          <div style="display:flex;gap:6px;margin-bottom:12px">
+            <button type="button" class="va-btn active" onclick="selectVA('BCA', '8214 0812 3456 7890', this)">BCA</button>
+            <button type="button" class="va-btn" onclick="selectVA('Mandiri', '8870 0812 3456 7890', this)">Mandiri</button>
+            <button type="button" class="va-btn" onclick="selectVA('BRI', '1280 0812 3456 7890', this)">BRI</button>
+            <button type="button" class="va-btn" onclick="selectVA('BNI', '9880 0812 3456 7890', this)">BNI</button>
+          </div>
+          <div style="background:rgba(0,0,0,0.3);border:1px solid var(--border);border-radius:10px;padding:12px;margin-bottom:10px">
+            <div style="display:flex;justify-content:space-between;align-items:center">
+              <div>
+                <div style="font-size:11px;color:var(--muted)">Nomor Virtual Account:</div>
+                <div style="font-size:17px;font-weight:800;letter-spacing:1px;color:var(--gold);margin:4px 0" id="vaNumberDisplay">8214 0812 3456 7890</div>
+              </div>
+              <button type="button" class="btn btn-outline btn-sm" onclick="copyAndSimulateVA()" style="padding:6px 12px;font-size:11px;border-color:var(--gold);color:var(--gold)">
+                Salin No. VA
+              </button>
+            </div>
+            <div style="font-size:11px;color:#22c55e;margin-top:4px" id="vaStatusText">Verifikasi pembayaran otomatis instan</div>
+          </div>
+          <button type="button" class="btn btn-outline btn-full" onclick="simulateVAPaymentSuccess()" style="padding:9px;font-size:12px;border-color:rgba(34,197,94,0.4);color:#22c55e;background:rgba(34,197,94,0.08)">
+            Simulasi Pembayaran VA Berhasil (Verifikasi Otomatis)
+          </button>
+        </div>
+
+        <!-- 3. DETAILS FOR EWALLET -->
+        <div id="payBox_ewallet" class="payment-box" style="display:none;background:rgba(255,255,255,0.03);border:1px solid var(--border);border-radius:14px;padding:16px">
+          <div style="font-size:12px;font-weight:700;margin-bottom:8px">Pilih E-Wallet:</div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px">
+            <button type="button" class="va-btn active" onclick="selectEwallet('GoPay', this)"> GoPay</button>
+            <button type="button" class="va-btn" onclick="selectEwallet('OVO', this)"> OVO</button>
+            <button type="button" class="va-btn" onclick="selectEwallet('DANA', this)"> DANA</button>
+            <button type="button" class="va-btn" onclick="selectEwallet('ShopeePay', this)"> ShopeePay</button>
+          </div>
+          <div style="font-size:11px;color:var(--muted);text-align:center">Aplikasi e-wallet akan membuka konfirmasi pembayaran otomatis</div>
+        </div>
+
+        <!-- 4. DETAILS FOR SPLIT BILL (1 QR CODE GABUNGAN BERSAMA) -->
+        <div id="payBox_split" class="payment-box" style="display:none;background:rgba(230,57,70,0.06);border:1px solid rgba(230,57,70,0.3);border-radius:14px;padding:16px">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+            <div>
+              <div style="font-weight:800;font-size:14px;color:#fff"> Patungan Rombongan (Split Bill)</div>
+              <div style="font-size:11px;color:var(--muted)">1 QR Code pembayaran bersama untuk seluruh teman</div>
+            </div>
+            <div style="display:flex;align-items:center;gap:6px">
+              <button type="button" class="btn btn-outline btn-sm" onclick="changeSplitCount(-1)" style="padding:2px 8px;font-weight:700">-</button>
+              <span id="splitCountVal" style="font-weight:800;font-size:14px;color:var(--gold);min-width:18px;text-align:center">3</span>
+              <span style="font-size:11px;color:var(--muted)">Org</span>
+              <button type="button" class="btn btn-outline btn-sm" onclick="changeSplitCount(1)" style="padding:2px 8px;font-weight:700">+</button>
+            </div>
+          </div>
+
+          <!-- Nominal per orang -->
+          <div style="background:rgba(0,0,0,0.3);border-radius:10px;padding:10px 12px;margin-bottom:14px;display:flex;justify-content:space-between;align-items:center">
+            <span style="font-size:12px;color:var(--muted)">Nominal per orang:</span>
+            <span style="font-size:15px;font-weight:800;color:var(--gold)" id="splitPerPersonTag">Rp 0</span>
+          </div>
+
+          <!-- 1 QR CODE GABUNGAN -->
+          <div style="text-align:center;margin-bottom:14px">
+            <div style="font-size:11px;font-weight:700;color:var(--gold);margin-bottom:6px">1 QR CODE PEMBAYARAN GABUNGAN</div>
+            <div id="splitQrContainer"></div>
+            <div style="font-size:11px;color:var(--muted);margin-top:6px">Masing-masing teman scan 1 QR Code ini dari HP mereka hingga lunas</div>
+
+            <!-- Tombol Bagikan QR Patungan -->
+            <div style="margin-top:10px">
+              <button type="button" class="btn btn-outline btn-full" onclick="openCheckoutShareModal()" style="padding:8px 12px;font-size:11px;border-color:rgba(37,211,102,0.4);color:#25d366;background:rgba(37,211,102,0.06);display:flex;align-items:center;justify-content:center;gap:6px">
+                <svg style="width:14px;height:14px" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <circle cx="18" cy="5" r="3"></circle>
+                  <circle cx="6" cy="12" r="3"></circle>
+                  <circle cx="18" cy="19" r="3"></circle>
+                  <line x1="8.59" y1="13.51" x2="15.42" y2="17.49"></line>
+                  <line x1="15.41" y1="6.51" x2="8.59" y2="10.49"></line>
+                </svg>
+                <span>Bagikan QR Patungan ke Teman</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- LIVE TRACKER PROGRESS PATUNGAN -->
+          <div style="background:rgba(0,0,0,0.4);border:1px solid rgba(255,255,255,0.08);border-radius:12px;padding:12px">
+            <div style="display:flex;justify-content:space-between;align-items:center;font-size:12px;margin-bottom:6px">
+              <span style="font-weight:700;color:var(--text)">Pelacakan Pelunasan Patungan:</span>
+              <span style="font-weight:800;color:#22c55e" id="splitStatusPercent">0%</span>
+            </div>
+            <!-- Progress Bar -->
+            <div style="height:8px;background:rgba(255,255,255,0.1);border-radius:4px;overflow:hidden;margin-bottom:10px">
+              <div id="splitProgressBar" style="width:0%;height:100%;background:linear-gradient(90deg,#e63946,#22c55e);transition:width 0.4s ease"></div>
+            </div>
+            <div style="display:flex;justify-content:space-between;font-size:11px;margin-bottom:10px">
+              <span style="color:var(--muted)">Terkumpul: <strong id="splitCollectedDisplay" style="color:#22c55e">Rp 0</strong></span>
+              <span style="color:var(--muted)">Total Tagihan: <strong id="splitTargetDisplay" style="color:var(--gold)">Rp 0</strong></span>
+            </div>
+
+            <!-- List of Contributors -->
+            <div id="splitContributorsList" style="display:flex;flex-direction:column;gap:6px;font-size:12px;margin-bottom:12px"></div>
+
+            <!-- Simulation Action Button -->
+            <button type="button" class="btn btn-outline btn-full" id="btnSimulateFriend" onclick="simulateFriendPayment()" style="padding:10px;font-size:12px;border-color:rgba(34,197,94,0.4);color:#22c55e;background:rgba(34,197,94,0.08)">
+               Simulasikan Pembayaran Teman (Scan QR)
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- COUNTDOWN TIMER BOX (10 MENIT BATAS WAKTU PEMBAYARAN) -->
+      <div id="checkoutTimerBox" style="margin:0 16px 14px;background:rgba(217,119,6,0.12);border:1px solid rgba(217,119,6,0.35);border-radius:12px;padding:12px 14px;display:flex;align-items:center;justify-content:space-between">
+        <div style="display:flex;align-items:center;gap:10px">
+          <div style="width:34px;height:34px;border-radius:50%;background:rgba(217,119,6,0.2);display:flex;align-items:center;justify-content:center;color:#f59e0b;flex-shrink:0">
+            <svg style="width:18px;height:18px" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="12" cy="12" r="10"></circle>
+              <polyline points="12 6 12 12 16 14"></polyline>
+            </svg>
+          </div>
+          <div>
+            <div style="font-size:12px;font-weight:700;color:#f59e0b">Selesaikan Pembayaran Dalam</div>
+            <div style="font-size:11px;color:var(--muted)">Kursi Anda sementara dikunci selama timer aktif</div>
+          </div>
+        </div>
+        <div id="checkoutCountdownDisplay" style="font-family:monospace;font-size:18px;font-weight:900;color:#f59e0b;background:rgba(0,0,0,0.4);padding:4px 10px;border-radius:8px;border:1px solid rgba(217,119,6,0.4)">
+          10:00
+        </div>
+      </div>
+
+      <!-- PAY BUTTON -->
+      <div style="padding:0 16px">
+        <button class="btn btn-primary btn-full" id="payFinalBtn" onclick="processPayment()" style="padding:15px;font-size:15px">
+           Selesaikan Pembayaran
+        </button>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- FLOATING CART BAR (WHEN IN MENU VIEW) -->
+  <div class="bottom-bar-cart" id="bottomCartBar">
+    <div>
+      <div style="font-size:11px;color:var(--muted)" id="cartItemCount">0 item dipilih</div>
+      <div style="font-size:16px;font-weight:700;color:var(--gold)" id="cartSubtotal">Rp 0</div>
+    </div>
+    <button class="btn btn-primary" onclick="switchView('checkout')" style="padding:10px 20px;border-radius:12px;font-size:14px">
+      Lanjut Bayar →
+    </button>
+  </div>
+
+  <!-- BOTTOM NAV -->
+  <nav class="bottom-nav">
+      <a class="nav-tab " href="beranda.html" title="Beranda">
+        <div class="nav-icon-wrap">
+          <svg class="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
+            <polyline points="9 22 9 12 15 12 15 22"></polyline>
+          </svg>
+        </div>
+      </a>
+      <a class="nav-tab active" href="fnb.html" title="Kantin F&B">
+        <div class="nav-icon-wrap">
+          <svg class="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M18 8h1a4 4 0 0 1 0 8h-1"></path>
+            <path d="M2 8h16v9a4 4 0 0 1-4 4H6a4 4 0 0 1-4-4V8z"></path>
+            <line x1="6" y1="1" x2="6" y2="4"></line>
+            <line x1="10" y1="1" x2="10" y2="4"></line>
+            <line x1="14" y1="1" x2="14" y2="4"></line>
+          </svg>
+        </div>
+      </a>
+      <a class="nav-tab " href="tiket.html" title="Tiket & Riwayat">
+        <div class="nav-icon-wrap">
+          <svg class="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="2" y="6" width="20" height="12" rx="2"></rect>
+            <path d="M13 12h.01"></path>
+            <path d="M2 10a2 2 0 0 0 0 4"></path>
+            <path d="M22 10a2 2 0 0 1 0 4"></path>
+          </svg>
+        </div>
+      </a>
+      <a class="nav-tab " href="akun.html" title="Profil Akun">
+        <div class="nav-icon-wrap">
+          <div class="nav-tab-avatar-wrap">
+            <img class="user-avatar-img" src="" alt="Avatar" style="display:none;width:100%;height:100%;object-fit:cover;border-radius:50%;" />
+            <svg class="user-avatar-svg w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+              <circle cx="12" cy="7" r="4"></circle>
+            </svg>
+          </div>
+        </div>
+      </a>
+    </nav>
+</div>
+
+<!-- MODAL BAGIKAN QR & TAGIHAN PEMBAYARAN -->
+<div class="modal-overlay center" id="checkoutShareModal">
+  <div class="modal" style="max-width:400px;border-color:rgba(37,211,102,0.35);background:linear-gradient(180deg,#141c16,#0d1110);box-shadow:0 10px 40px rgba(0,0,0,0.85)">
+    <div class="modal-header" style="border-bottom-color:rgba(37,211,102,0.25)">
+      <div class="modal-title" style="color:#25d366;font-size:15px;display:flex;align-items:center;gap:8px">
+        <svg style="width:18px;height:18px" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="18" cy="5" r="3"></circle>
+          <circle cx="6" cy="12" r="3"></circle>
+          <circle cx="18" cy="19" r="3"></circle>
+          <line x1="8.59" y1="13.51" x2="15.42" y2="17.49"></line>
+          <line x1="15.41" y1="6.51" x2="8.59" y2="10.49"></line>
+        </svg>
+        Bagikan Tagihan Pembayaran
+      </div>
+      <button class="modal-close" onclick="closeCheckoutShareModal()">&times;</button>
+    </div>
+    <div class="modal-body" style="padding:16px 20px 22px">
+      <!-- Info Ringkasan Tagihan -->
+      <div style="background:rgba(0,0,0,0.45);border:1px solid rgba(255,255,255,0.08);border-radius:12px;padding:12px;margin-bottom:14px;text-align:center">
+        <div style="font-size:14px;font-weight:800;color:var(--text)" id="checkoutShareMovie">Film Bioskop</div>
+        <div style="font-size:11px;color:var(--muted);margin-top:2px" id="checkoutShareDetails">XXI · Kursi</div>
+        <div style="font-size:16px;font-weight:900;color:var(--gold);margin-top:6px" id="checkoutShareTotal">Total: Rp 0</div>
+        
+        <!-- Preview QR Code Tagihan -->
+        <div style="display:flex;justify-content:center;margin:12px 0 6px">
+          <div id="checkoutShareQrDisplay" style="background:#ffffff;padding:8px;border-radius:10px;display:inline-block"></div>
+        </div>
+        <div style="font-size:10px;color:rgba(255,255,255,0.5)">Pindai untuk memproses atau menyelesaikan pembayaran</div>
+      </div>
+
+      <!-- Tombol Pilihan Berbagi -->
+      <div style="display:flex;flex-direction:column;gap:8px">
+        <!-- WhatsApp -->
+        <a id="btnShareCheckoutWa" href="#" target="_blank" style="display:flex;align-items:center;gap:12px;padding:10px 14px;border-radius:10px;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);color:#fff;text-decoration:none;transition:all 0.2s">
+          <div style="width:34px;height:34px;border-radius:50%;background:#25d366;color:#fff;display:flex;align-items:center;justify-content:center;flex-shrink:0">
+            <svg viewBox="0 0 24 24" fill="currentColor" width="18" height="18">
+              <path d="M12.04 2C6.58 2 2.13 6.45 2.13 11.91C2.13 13.66 2.59 15.36 3.45 16.86L2.05 22L7.3 20.62C8.75 21.41 10.38 21.83 12.04 21.83C17.5 21.83 21.95 17.38 21.95 11.92C21.95 6.46 17.5 2 12.04 2Z"/>
+            </svg>
+          </div>
+          <div>
+            <div style="font-size:13px;font-weight:700">Kirim Tagihan ke WhatsApp</div>
+            <div style="font-size:10px;color:rgba(255,255,255,0.5)">Bantu teman scan atau minta tolong bayar</div>
+          </div>
+        </a>
+
+        <!-- Web Share API -->
+        <button type="button" id="btnShareCheckoutNative" onclick="triggerCheckoutNativeShare()" style="display:flex;align-items:center;gap:12px;padding:10px 14px;border-radius:10px;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);color:#fff;text-align:left;cursor:pointer;transition:all 0.2s">
+          <div style="width:34px;height:34px;border-radius:50%;background:#3b82f6;color:#fff;display:flex;align-items:center;justify-content:center;flex-shrink:0">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18">
+              <circle cx="18" cy="5" r="3"></circle>
+              <circle cx="6" cy="12" r="3"></circle>
+              <circle cx="18" cy="19" r="3"></circle>
+              <line x1="8.59" y1="13.51" x2="15.42" y2="17.49"></line>
+              <line x1="15.41" y1="6.51" x2="8.59" y2="10.49"></line>
+            </svg>
+          </div>
+          <div>
+            <div style="font-size:13px;font-weight:700">Bagikan ke Aplikasi Lain</div>
+            <div style="font-size:10px;color:rgba(255,255,255,0.5)">Telegram, Line, Catatan, dll.</div>
+          </div>
+        </button>
+
+        <!-- Salin Info Tagihan -->
+        <button type="button" onclick="copyCheckoutBillText()" style="display:flex;align-items:center;gap:12px;padding:10px 14px;border-radius:10px;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);color:#fff;text-align:left;cursor:pointer;transition:all 0.2s">
+          <div style="width:34px;height:34px;border-radius:50%;background:rgba(255,215,0,0.15);color:var(--gold);display:flex;align-items:center;justify-content:center;flex-shrink:0">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18">
+              <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+              <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+            </svg>
+          </div>
+          <div>
+            <div style="font-size:13px;font-weight:700">Salin Rincian Tagihan</div>
+            <div style="font-size:10px;color:rgba(255,255,255,0.5)">Salin teks nominal &amp; rincian ke papan klip</div>
+          </div>
+        </button>
+
+        <!-- Unduh Gambar QR -->
+        <button type="button" onclick="downloadCheckoutQrPng()" style="display:flex;align-items:center;gap:12px;padding:10px 14px;border-radius:10px;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);color:#fff;text-align:left;cursor:pointer;transition:all 0.2s">
+          <div style="width:34px;height:34px;border-radius:50%;background:rgba(34,197,94,0.15);color:#22c55e;display:flex;align-items:center;justify-content:center;flex-shrink:0">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18">
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+              <polyline points="7 10 12 15 17 10"></polyline>
+              <line x1="12" y1="15" x2="12" y2="3"></line>
+            </svg>
+          </div>
+          <div>
+            <div style="font-size:13px;font-weight:700">Unduh QR Pembayaran (PNG)</div>
+            <div style="font-size:10px;color:rgba(255,255,255,0.5)">Simpan gambar QR Code pembayaran</div>
+          </div>
+        </button>
+      </div>
+
+      <div style="margin-top:16px;text-align:right">
+        <button class="btn btn-outline" style="padding:7px 16px;font-size:12px" onclick="closeCheckoutShareModal()">Tutup</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="../../data.js"></script>
+<script src="../js/fnb.js"></script>
+</body>
+</html>

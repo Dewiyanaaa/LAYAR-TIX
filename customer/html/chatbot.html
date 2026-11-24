@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="id">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Asisten Chatbot – LayarTix</title>
+  <link rel="stylesheet" href="../css/beranda.css" />
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    body {
+      align-items: flex-start;
+    }
+
+    .chatbot-full-page-container {
+      display: flex;
+      flex-direction: column;
+      height: calc(100vh - 140px);
+      min-height: 540px;
+      margin: 12px 16px 20px;
+      background: linear-gradient(145deg, rgba(32, 16, 22, 0.95) 0%, rgba(18, 18, 28, 0.98) 100%);
+      border: 1px solid rgba(255, 215, 0, 0.28);
+      border-radius: 24px;
+      overflow: hidden;
+      box-shadow: 0 12px 40px rgba(0, 0, 0, 0.6), 0 0 24px rgba(230, 57, 70, 0.12);
+      backdrop-filter: blur(14px);
+    }
+
+    @media (min-width: 768px) {
+      .chatbot-full-page-container {
+        max-width: 900px;
+        margin: 16px auto 24px;
+        height: calc(100vh - 160px);
+        min-height: 600px;
+      }
+    }
+
+    .chatbot-full-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 16px 20px;
+      background: linear-gradient(90deg, rgba(230, 57, 70, 0.18), rgba(255, 215, 0, 0.09));
+      border-bottom: 1px solid rgba(255, 215, 0, 0.2);
+    }
+
+    .chatbot-full-viewport {
+      flex: 1;
+      overflow-y: auto;
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+      background: rgba(10, 8, 14, 0.45);
+    }
+
+    .chatbot-full-viewport::-webkit-scrollbar {
+      width: 6px;
+    }
+
+    .chatbot-full-viewport::-webkit-scrollbar-track {
+      background: rgba(0, 0, 0, 0.25);
+    }
+
+    .chatbot-full-viewport::-webkit-scrollbar-thumb {
+      background: rgba(255, 215, 0, 0.28);
+      border-radius: 4px;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="app-frame">
+
+    <!-- HEADER -->
+    <header class="app-header">
+      <div class="header-container">
+        <div style="display:flex;align-items:center;gap:12px">
+          <button type="button" class="btn-nav-back" onclick="handleSmartBack('akun.html')" title="Kembali ke Pengaturan / Akun">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+              <polyline points="15 18 9 12 15 6"></polyline>
+            </svg>
+            <span>Kembali</span>
+          </button>
+          <div class="header-logo" onclick="window.location.href='beranda.html'">LAYARTIX</div>
+          <nav class="desktop-nav">
+            <a href="beranda.html" class="desktop-nav-link ">LayarTix Beranda</a>
+            <a href="fnb.html" class="desktop-nav-link ">LayarTix Kantin F&amp;B</a>
+            <a href="tiket.html" class="desktop-nav-link ">Tiket Anda</a>
+            <a href="akun.html" class="desktop-nav-link active">Akun &amp; Pengaturan</a>
+          </nav>
+        </div>
+
+        <div style="display:flex;align-items:center;gap:10px">
+          <button type="button" class="btn-chatbot-action" onclick="clearChatbotHistory()" title="Bersihkan Percakapan">
+            <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <polyline points="3 6 5 6 21 6"></polyline>
+              <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+            </svg>
+            <span>Bersihkan Chat</span>
+          </button>
+        </div>
+      </div>
+    </header>
+
+    <div class="page-content page-enter" style="padding-bottom:80px">
+
+      <!-- Chatbot Full Page Dedicated Wrapper -->
+      <div class="chatbot-full-page-container">
+        
+        <!-- Header Chatbot Card -->
+        <div class="chatbot-full-header">
+          <div class="chatbot-header-left">
+            <div class="chatbot-avatar-wrap" style="width:44px;height:44px;">
+              <span class="chatbot-avatar-icon" style="font-size:24px;">🤖</span>
+              <span class="chatbot-status-pulse"></span>
+            </div>
+            <div>
+              <div class="chatbot-meta-name" style="font-size:16px;">
+                <span>Asisten Chatbot LayarTix</span>
+                <span class="chatbot-tag-online">Siaga 24/7</span>
+              </div>
+              <div class="chatbot-meta-sub" style="font-size:12px;">Pusat bantuan interaktif seputar aturan transaksi, F&amp;B, Share QR, refund, dan fitur LayarTix</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Messages Viewport -->
+        <div class="chatbot-full-viewport" id="chatbotMessages">
+          <!-- Rendered dynamically by JavaScript -->
+        </div>
+
+        <!-- Quick Question Chips -->
+        <div class="chatbot-chips-wrap">
+          <div class="chatbot-chips-title">Pilih Pertanyaan Cepat:</div>
+          <div class="chatbot-chips-scroll">
+            <button type="button" class="chip-btn" onclick="sendQuickQuery('Aturan bayar 10 menit')">⏱️ Bayar 10 Menit</button>
+            <button type="button" class="chip-btn" onclick="sendQuickQuery('Cara menggunakan Share QR')">📲 Cara Share QR</button>
+            <button type="button" class="chip-btn" onclick="sendQuickQuery('Aturan pembatalan 3 opsi')">🚫 Aturan Pembatalan</button>
+            <button type="button" class="chip-btn" onclick="sendQuickQuery('Stok F&B dan zona waktu')">🍿 Stok F&B (200)</button>
+            <button type="button" class="chip-btn" onclick="sendQuickQuery('Zona waktu bioskop dan jam lewat')">🕒 Zona Waktu (WIB/WITA/WIT)</button>
+            <button type="button" class="chip-btn" onclick="sendQuickQuery('Fitur ulasan per film')">⭐ Ulasan per Film</button>
+            <button type="button" class="chip-btn" onclick="sendQuickQuery('3D Seat Preview dan Group Booking')">💺 3D Seat Preview</button>
+            <button type="button" class="chip-btn" onclick="sendQuickQuery('Apakah ada fitur parkir?')">🅿️ Info Parkir?</button>
+          </div>
+        </div>
+
+        <!-- Chat Input Bar -->
+        <form class="chatbot-input-bar" onsubmit="handleChatbotSubmit(event)" style="padding:12px 18px;">
+          <input type="text" id="chatbotInputText" class="chatbot-text-input" placeholder="Ketik pertanyaan Anda seputar aturan bayar, tiket, F&B, atau fitur LayarTix..." autocomplete="off" />
+          <button type="submit" class="btn-chatbot-send" id="btnChatSend" style="padding:10px 20px;">
+            <span>Kirim</span>
+            <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+              <line x1="22" y1="2" x2="11" y2="13"></line>
+              <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
+            </svg>
+          </button>
+        </form>
+
+      </div>
+
+    </div>
+
+    <!-- BOTTOM NAV -->
+    <nav class="bottom-nav">
+      <a class="nav-tab " href="beranda.html" title="Beranda">
+        <div class="nav-icon-wrap">
+          <svg class="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
+            <polyline points="9 22 9 12 15 12 15 22"></polyline>
+          </svg>
+        </div>
+      </a>
+      <a class="nav-tab " href="fnb.html" title="Kantin F&B">
+        <div class="nav-icon-wrap">
+          <svg class="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M18 8h1a4 4 0 0 1 0 8h-1"></path>
+            <path d="M2 8h16v9a4 4 0 0 1-4 4H6a4 4 0 0 1-4-4V8z"></path>
+            <line x1="6" y1="1" x2="6" y2="4"></line>
+            <line x1="10" y1="1" x2="10" y2="4"></line>
+            <line x1="14" y1="1" x2="14" y2="4"></line>
+          </svg>
+        </div>
+      </a>
+      <a class="nav-tab " href="tiket.html" title="Tiket & Riwayat">
+        <div class="nav-icon-wrap">
+          <svg class="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="2" y="6" width="20" height="12" rx="2"></rect>
+            <path d="M13 12h.01"></path>
+            <path d="M2 10a2 2 0 0 0 0 4"></path>
+            <path d="M22 10a2 2 0 0 1 0 4"></path>
+          </svg>
+        </div>
+      </a>
+      <a class="nav-tab active" href="akun.html" title="Akun">
+        <div class="nav-icon-wrap">
+          <div class="nav-tab-avatar-wrap">
+            <img class="user-avatar-img" src="" alt="Avatar" style="display:none;width:100%;height:100%;object-fit:cover;border-radius:50%;" />
+            <svg class="user-avatar-svg w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+              <circle cx="12" cy="7" r="4"></circle>
+            </svg>
+          </div>
+        </div>
+      </a>
+    </nav>
+
+  </div>
+
+  <script src="../../data.js"></script>
+  <script src="../js/chatbot.js"></script>
+</body>
+
+</html>
